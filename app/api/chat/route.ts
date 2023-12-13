@@ -4,6 +4,7 @@ import { OpenAI } from "openai";
 import {
   OpenAIStream,
   StreamingTextResponse,
+  experimental_StreamData,
 } from "ai";
 import { functions, runFunction } from "./functions";
 
@@ -46,27 +47,35 @@ export async function POST(req: Request) {
 
   // check if the conversation requires a function call to be made
   const initialResponse = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo-0613",
+    model: "gpt-3.5-turbo-1106",
     messages,
     stream: true,
     functions,
     function_call: "auto",
   });
 
+  const data = new experimental_StreamData();
   const stream = OpenAIStream(initialResponse, {
+    onFinal: () => {
+      data.close();
+    },
+    experimental_streamData: true,
     experimental_onFunctionCall: async (
       { name, arguments: args },
       createFunctionCallMessages,
     ) => {
+      console.log("appending Data");
+      data.append({ message: "Searching Hacker News..." });
       const result = await runFunction(name, args);
       const newMessages = createFunctionCallMessages(result);
+      data.append({ message: "Done Searching Hacker news" });
       return openai.chat.completions.create({
-        model: "gpt-3.5-turbo-0613",
+        model: "gpt-3.5-turbo-1106",
         stream: true,
         messages: [...messages, ...newMessages],
       });
     },
   });
 
-  return new StreamingTextResponse(stream);
+  return new StreamingTextResponse(stream, {}, data);
 }

@@ -104,6 +104,8 @@ async function summarize_top_story() {
 }
 
 export async function runFunction(name: string, args: any) {
+  // takes 10 seconds
+  await new Promise((resolve) => setTimeout(resolve, 10000));
   switch (name) {
     case "get_top_stories":
       return await get_top_stories();

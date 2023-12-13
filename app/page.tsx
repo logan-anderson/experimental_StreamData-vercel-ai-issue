@@ -21,7 +21,7 @@ export default function Chat() {
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const { messages, input, setInput, handleSubmit, isLoading } = useChat({
+  const { messages, input, data, setInput, handleSubmit, isLoading } = useChat({
     onResponse: (response) => {
       if (response.status === 429) {
         toast.error("You have reached your request limit for the day.");
@@ -40,6 +40,13 @@ export default function Chat() {
   });
 
   const disabled = isLoading || input.length === 0;
+  const dataMessages = data as { message: string }[] | undefined;
+  console.log({ dataMessages });
+
+  const lastDataMessage =
+    typeof dataMessages !== "undefined"
+      ? dataMessages[dataMessages.length - 1]
+      : undefined;
 
   return (
     <main className="flex flex-col items-center justify-between pb-40">
@@ -58,6 +65,9 @@ export default function Chat() {
         >
           <GithubIcon />
         </a>
+      </div>
+      <div className="m-3">
+        Status: {lastDataMessage && lastDataMessage.message}
       </div>
       {messages.length > 0 ? (
         messages.map((message, i) => (
